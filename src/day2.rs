@@ -19,8 +19,6 @@ pub fn solution1() -> i32 {
         if let Ok(game_string) = line {
             let game: Game = Game::parse_game(&game_string);
             if game.is_valid() {
-                println!("{}",game_string);
-                println!("{:?}",game);
                 sum+=game.n;
             }
         }
@@ -34,13 +32,14 @@ pub fn solution2() -> i32 {
         println!("{}",lines_result.err().unwrap());
         panic!("Error Reading File");
     };
+    let mut sum: i32 = 0;
     for line in lines {
-        if let Ok(_code) = line {
-            //println!("{}",code);
+        if let Ok(game_string) = line {
+            let game: Game = Game::parse_game(&game_string);
+            sum+=game.minimum_set().power();
         }
     };
-
-    return 0
+    return sum
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -95,11 +94,31 @@ impl Game {
     fn is_valid(&self) -> bool {
         !self.hands.iter().any(|x: &Hand| !x.is_valid())
     }
+
+    fn minimum_set(&self) -> Hand {
+        let mut r: i32 = 0;
+        let mut g: i32 = 0;
+        let mut b: i32 = 0;
+        for hand in self.hands.iter() {
+            if hand.r > r {
+                r = hand.r;
+            }
+            if hand.g > g {
+                g = hand.g
+            }
+            if hand.b > b {
+                b = hand.b
+            }
+        }
+        return Hand {r,g,b}
+    }
 }
 
 impl Hand {
     fn is_valid(&self) -> bool {
         return self.r <= MAX_RED && self.g <=MAX_GREEN && self.b <= MAX_BLUE;
     }
-
+    fn power(&self) -> i32 {
+        return self.r * self.g * self.b;
+    }
 }
