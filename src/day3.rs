@@ -19,7 +19,29 @@ pub fn solution1() -> i32 {
 }
 
 pub fn solution2() -> i32 {
-    return 0;
+    let lines = read_lines("./inputs/input3.txt");
+    
+    let engine = Engine {
+        grid: lines.iter().map(|s: &String| s.chars().collect()).collect(), 
+        width:lines[0].len().try_into().unwrap(), 
+        height: lines.len().try_into().unwrap()
+    };
+    let mut sum = 0;
+    let engine_numbers = engine.get_engine_numbers();
+    for position in engine.get_gear_symbols().iter() {
+        let mut gear_numbers: Vec<&Vec<(i32,i32)>> = Vec::new();
+        for adjacent_position in engine.get_adjacent_cells(position).iter() {
+            for engine_number in engine_numbers.iter() {
+                if engine_number.contains(adjacent_position) && !gear_numbers.contains(&engine_number) {
+                    gear_numbers.push(engine_number)
+                }
+            }
+        }
+        if gear_numbers.len() == 2 {
+            sum += engine.get_part_value(gear_numbers[0]) * engine.get_part_value(gear_numbers[1])
+        }
+    }
+    return sum;
 }
 
 fn read_lines(filename: &str) -> Vec<String> {
@@ -52,6 +74,19 @@ impl Engine {
         }
         return numbers;
     }
+
+    fn get_gear_symbols(&self) -> Vec<(i32,i32)> {
+        let mut cells: Vec<(i32,i32)> = Vec::new();
+        for (y,grid_line) in self.grid.iter().enumerate() {
+            for (x, character) in grid_line.iter().enumerate() {
+                if *character == '*' {
+                    cells.push((x.try_into().unwrap(),y.try_into().unwrap()))
+                }
+            }
+        }
+        return cells;
+    }
+
     fn get_adjacent_cells(&self, position: &(i32,i32)) -> Vec<(i32,i32)> {
         let x: i32 = position.0;
         let y: i32 = position.1;
