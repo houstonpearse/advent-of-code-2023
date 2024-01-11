@@ -28,7 +28,7 @@ pub fn solution1() -> i64 {
         
     return seeds.iter().map(|seed| chain.chain_maps(seed)).min().unwrap();
 }
-
+#[allow(dead_code)]
 pub fn solution2() -> i64 {
     let input = read_to_string("./inputs/input5.txt").unwrap();
     let split: Vec<&str> = input.split("\n\n").collect();
@@ -143,7 +143,6 @@ impl MyMap {
 struct Item {
     start_to: i64,
     start_from: i64,
-    length: i64,
     end_to: i64,
     end_from: i64,
 }
@@ -157,7 +156,6 @@ impl Item {
         Item {
             start_to: nums[0],
             start_from: nums[1],
-            length: nums[2],
             end_to: nums[0] + nums[2] - 1,
             end_from: nums[1] + nums[2] - 1,
         }
