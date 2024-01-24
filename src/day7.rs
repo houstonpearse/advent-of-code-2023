@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs::read_to_string};
+use std::{cmp::Ordering, fs::read_to_string, collections::HashMap};
 
 pub fn solution1() -> i32 {
     let input: Vec<String> = read_to_string("./inputs/input7.txt").unwrap().lines().map(String::from).collect();
@@ -6,10 +6,12 @@ pub fn solution1() -> i32 {
     for line in input {
         tree.insert(Hand::from(line))
     }
-    for hand in &tree {
-        println!("{:?}",hand);
+    let mut score = 0;
+    for (index, hand) in tree.into_iter().rev().enumerate() {
+        let i :i32 = index.try_into().unwrap();
+        score += (i+1) * hand.bet
     }
-    return 0;
+    return score;
 }
 
 pub fn solution2() -> i64 {
@@ -102,22 +104,127 @@ impl<'a, T:Ord> IntoIterator for &'a Node<T> {
     }
 }
 
-#[derive(PartialEq,Eq,PartialOrd,Debug)]
+#[derive(Debug)]
 struct Hand {
-    cards: String,
+    cards: Vec<Card>,
+    hand_type: HandType,
     bet: i32,
 }
 
 impl Hand {
     fn from(s: String) -> Self {
         let mut iter = s.split_whitespace();
-        Hand {cards: iter.next().unwrap().to_string(), bet: iter.next().unwrap().parse::<i32>().unwrap()}
+        let cards: Vec<Card> = iter.next().unwrap().to_string().chars().map(|c| Card::from(&c)).collect();
+        let bet = iter.next().unwrap().parse::<i32>().unwrap();
+        let hand_type = Self::get_type(&cards);
+        Hand {cards, hand_type, bet}
+    }
+    fn get_type(cards: &Vec<Card>) -> HandType {
+        let mut hashmap = HashMap::<Card,i32>::new();
+        for c in cards {
+            if let Some(val) = hashmap.get(c) {
+                hashmap.insert(*c, val + 1);
+            } else {
+                hashmap.insert(*c, 1);
+            }
+        }
+        let mut hand_type = HandType::HighCard;
+        for (_,val) in hashmap {
+            if val == 2 {
+                hand_type = match hand_type {
+                    HandType::Triple => HandType::FullHouse,
+                    HandType::Pair => HandType::TwoPair,
+                    HandType::HighCard => HandType::Pair,
+                    _ => hand_type
+                };
+            } else if val == 3 {
+                hand_type = match hand_type {
+                    HandType::Pair => HandType::FullHouse,
+                    HandType::HighCard => HandType::Triple,
+                    _ => hand_type
+                };
+            } else if val == 4 {
+                hand_type = HandType::Quads
+            } else if val == 5 {
+                hand_type = HandType::Quints
+            }
+        }
+        return hand_type
     }
 }
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
-        return self.cards.cmp(&other.cards)
+        let current = self.hand_type.cmp(&other.hand_type);
+        if current == Ordering::Equal {
+            for (self_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
+                let cmp_card = self_card.cmp(other_card);
+                if cmp_card != Ordering::Equal {
+                    return cmp_card;
+                }
+            }
+        }
+        return current
+    }
+}
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        return Some(self.cards.cmp(&other.cards))
+    }
+}
+impl PartialEq for Hand {
+    fn eq(&self, other: &Self) -> bool {
+        self.cards == other.cards
+    }
+}
+
+impl Eq for Hand {}
+
+#[derive(Debug,PartialEq, PartialOrd,Ord,Eq)]
+enum HandType {
+    Quints,
+    Quads,
+    FullHouse,
+    Triple,
+    TwoPair,
+    Pair,
+    HighCard
+}
+
+#[derive(Debug,PartialEq, PartialOrd,Ord,Eq,Hash,Copy,Clone)]
+enum Card {
+    Ace,
+    King,
+    Queen,
+    Jack,
+    Ten,
+    Nine,
+    Eight,
+    Seven,
+    Six,
+    Five,
+    Four,
+    Three,
+    Two
+}
+
+impl Card {
+    fn from(c: &char) -> Card {
+        return match c {
+            'A' => Card::Ace,
+            'K' => Card::King,
+            'Q' => Card::Queen,
+            'J' => Card::Jack,
+            'T' => Card::Ten,
+            '9' => Card::Nine,
+            '8' => Card::Eight,
+            '7' => Card::Seven,
+            '6' => Card::Six,
+            '5' => Card::Five,
+            '4' => Card::Four,
+            '3' => Card::Three,
+            _ => Card::Two,
+        }
     }
 }
 
@@ -130,5 +237,15 @@ impl<'a,T:Ord> Iterator for RefNodeIterator<'a,T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         return self.list.pop().map(|node| &node.val);
+    }
+}
+
+impl<'a,T:Ord> DoubleEndedIterator for RefNodeIterator<'a,T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let val = self.list.first().map(|node| &node.val);
+        if val != None {
+            self.list.remove(0);
+        }
+        return val
     }
 }
