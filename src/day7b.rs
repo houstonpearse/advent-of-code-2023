@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fs::read_to_string, collections::HashMap};
 
-pub fn solution1() -> i32 {
+pub fn solution2() -> i32 {
     let input: Vec<String> = read_to_string("./inputs/input7.txt").unwrap().lines().map(String::from).collect();
     let mut tree: BTree<Hand> = BTree::new();
     for line in input {
@@ -124,7 +124,12 @@ impl Hand {
                 hashmap.insert(*c, 1);
             }
         }
+        let num_jacks: i32 = *hashmap.get(&Card::Jack).unwrap_or(&0);
+        hashmap.remove(&Card::Jack);
         let mut hand_type = HandType::HighCard;
+        if num_jacks == 5 {
+            hand_type = HandType::Quints;
+        }
         for (_,val) in hashmap {
             if val == 2 {
                 hand_type = match hand_type {
@@ -145,6 +150,36 @@ impl Hand {
                 hand_type = HandType::Quints
             }
         }
+        
+        if num_jacks == 1 {
+            hand_type = match hand_type {
+                HandType::Quads => HandType::Quints,
+                HandType::Triple => HandType::Quads,
+                HandType::TwoPair => HandType::FullHouse,
+                HandType::Pair => HandType::Triple,
+                HandType::HighCard => HandType::Pair,
+                _ => hand_type
+            };
+        } else if num_jacks == 2 {
+            hand_type = match hand_type {
+                HandType::Quads => HandType::Quints,
+                HandType::Triple => HandType::Quints,
+                HandType::Pair => HandType::Quads,
+                HandType::HighCard => HandType::Triple,
+                _ => hand_type
+            };
+            
+        } else if num_jacks == 3 {
+            hand_type = match hand_type {
+                HandType::Pair => HandType::Quints,
+                HandType::HighCard => HandType::Quads,
+                _ => hand_type
+            };
+            
+        } else if num_jacks == 4 {
+            hand_type = HandType::Quints
+        }
+        
         return hand_type
     }
 }
@@ -192,7 +227,6 @@ enum Card {
     Ace,
     King,
     Queen,
-    Jack,
     Ten,
     Nine,
     Eight,
@@ -201,7 +235,8 @@ enum Card {
     Five,
     Four,
     Three,
-    Two
+    Two,
+    Jack,
 }
 
 impl Card {

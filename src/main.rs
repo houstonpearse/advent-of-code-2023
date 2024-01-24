@@ -5,6 +5,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day7b;
 fn main() {
     println!("day1 solution1 = {}",day1::solution1());
     println!("day1 solution2 = {}",day1::solution2());
@@ -19,5 +20,5 @@ fn main() {
     println!("day6 solution1 = {}",day6::solution1());
     println!("day6 solution2 = {}",day6::solution2());
     println!("day7 solution1 = {}",day7::solution1());
-    println!("day7 solution2 = {}",day7::solution2());
+    println!("day7 solution2 = {}",day7b::solution2());
 }
